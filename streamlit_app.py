@@ -16,27 +16,25 @@ rgb_values = np.array([
 ])
 ph_values = np.array([0, 3, 5, 7, 9, 11, 14])
 
+# 비선형 보간법을 사용해 RGB 값을 기반으로 pH 값을 추정
 def get_ph_from_rgb(r, g, b):
-    # RGB 값을 기준으로 pH 값을 추정하는 함수
     input_rgb = np.array([r, g, b])
 
-    # 기준점들 사이에서 거리를 계산하여 pH 값을 선형 보간
-    distances = np.linalg.norm(rgb_values - input_rgb, axis=1)
-    closest_idx = distances.argsort()[:2]  # 두 개의 가장 가까운 기준점 찾기
+    # RGB 값에 대한 pH 값 다항식 보간 (R, G, B 각각에 대해 보간)
+    r_ph_fit = np.polyfit(rgb_values[:, 0], ph_values, 2)  # R 값 보간
+    g_ph_fit = np.polyfit(rgb_values[:, 1], ph_values, 2)  # G 값 보간
+    b_ph_fit = np.polyfit(rgb_values[:, 2], ph_values, 2)  # B 값 보간
 
-    # 가장 가까운 두 점 사이에서 보간
-    p1, p2 = rgb_values[closest_idx[0]], rgb_values[closest_idx[1]]
-    ph1, ph2 = ph_values[closest_idx[0]], ph_values[closest_idx[1]]
-    d1, d2 = distances[closest_idx[0]], distances[closest_idx[1]]
+    # 다항식을 이용해 예측된 pH 값을 계산
+    ph_r = np.polyval(r_ph_fit, r)
+    ph_g = np.polyval(g_ph_fit, g)
+    ph_b = np.polyval(b_ph_fit, b)
 
-    # 선형 보간 공식
-    if d1 + d2 == 0:
-        return round(ph1, 2)  # 두 점이 동일한 경우, ph1 반환
-    weight1 = 1 - (d1 / (d1 + d2))
-    weight2 = 1 - (d2 / (d1 + d2))
-    interpolated_ph = ph1 * weight1 + ph2 * weight2
+    # R, G, B에 대한 pH 값의 가중 평균 계산
+    predicted_ph = (ph_r + ph_g + ph_b) / 3
 
-    return round(interpolated_ph, 2)
+    # pH 값을 0~14 범위로 제한
+    return round(np.clip(predicted_ph, 0, 14), 2)
 
 # CSV 파일 경로 설정 (저장된 pH 예측값을 저장할 CSV 파일)
 DATA_FILE = "ph_predictions.csv"
