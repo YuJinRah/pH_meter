@@ -34,8 +34,8 @@ def get_ph_from_rgb(r, g, b):
     elif r < 100 and g > 150 and b > 150:
         return 8.0 + (b - 150) * 0.02
     # 알칼리성 (파란색 계열: pH 10-11)
-    elif r < 100 and g < 100 and b > 200:
-        return 10.0 + (255 - b) * 0.01
+    elif r < 150 and g < 150 and b > 150:
+        return 10.0 + (255 - b) * 0.02
     # 강알칼리성 (보라색 계열: pH 12-14)
     elif r > 100 and g < 100 and b > 150:
         return 12.0 + (r - 100) * 0.02
