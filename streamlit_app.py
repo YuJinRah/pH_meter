@@ -16,25 +16,31 @@ rgb_values = np.array([
 ])
 ph_values = np.array([0, 3, 5, 7, 9, 11, 14])
 
-# 비선형 보간법을 사용해 RGB 값을 기반으로 pH 값을 추정
+# pH 값을 구간별로 매핑하는 함수
 def get_ph_from_rgb(r, g, b):
-    input_rgb = np.array([r, g, b])
-
-    # RGB 값에 대한 pH 값 다항식 보간 (R, G, B 각각에 대해 보간)
-    r_ph_fit = np.polyfit(rgb_values[:, 0], ph_values, 2)  # R 값 보간
-    g_ph_fit = np.polyfit(rgb_values[:, 1], ph_values, 2)  # G 값 보간
-    b_ph_fit = np.polyfit(rgb_values[:, 2], ph_values, 2)  # B 값 보간
-
-    # 다항식을 이용해 예측된 pH 값을 계산
-    ph_r = np.polyval(r_ph_fit, r)
-    ph_g = np.polyval(g_ph_fit, g)
-    ph_b = np.polyval(b_ph_fit, b)
-
-    # R, G, B에 대한 pH 값의 가중 평균 계산
-    predicted_ph = (ph_r + ph_g + ph_b) / 3
-
-    # pH 값을 0~14 범위로 제한
-    return round(np.clip(predicted_ph, 0, 14), 2)
+    # 강산성 (붉은색 계열: pH 0-2)
+    if r > 150 and g < 100 and b < 100:
+        return 0 + (255 - r) * 0.01  # pH 0에서 2 사이
+    # 약산성 (주황색 계열: pH 3-4)
+    elif r > 200 and g > 100 and b < 50:
+        return 3.0 + (g - 100) * 0.02
+    # 약산성 (노란색 계열: pH 5-6)
+    elif r > 200 and g > 200 and b < 100:
+        return 5.0 + (255 - g) * 0.02
+    # 중성 (초록색: pH 7)
+    elif r < 100 and g > 200 and b < 100:
+        return 7.0
+    # 약알칼리성 (청록색 계열: pH 8-9)
+    elif r < 100 and g > 150 and b > 150:
+        return 8.0 + (b - 150) * 0.02
+    # 알칼리성 (파란색 계열: pH 10-11)
+    elif r < 100 and g < 100 and b > 200:
+        return 10.0 + (255 - b) * 0.01
+    # 강알칼리성 (보라색 계열: pH 12-14)
+    elif r > 100 and g < 100 and b > 150:
+        return 12.0 + (r - 100) * 0.02
+    else:
+        return 7.0  # 기본값: 중성
 
 # CSV 파일 경로 설정 (저장된 pH 예측값을 저장할 CSV 파일)
 DATA_FILE = "ph_predictions.csv"
